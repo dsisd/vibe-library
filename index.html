@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>圖書館借用系統</title>
+  <style>
+    :root {
+      --bg: #f3eadc;
+      --card: #fffaf2;
+      --ink: #2a2118;
+      --muted: #74685b;
+      --line: #e4d6c2;
+      --accent: #8d3b2f;
+      --accent-dark: #6e2c22;
+      --green: #1f4b3a;
+      --green-soft: #e5f0ea;
+      --busy: #8a5a12;
+      --busy-soft: #f8efd8;
+      --mine: #234e78;
+      --mine-soft: #e7f0f8;
+      --danger: #8d3b2f;
+      --shadow: 0 18px 40px rgba(70, 48, 24, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 420px at 0% -10%, #fbf6ee, transparent 55%),
+        linear-gradient(180deg, #f7f1e6 0%, var(--bg) 40%);
+      font-family: "Avenir Next", "PingFang TC", "Noto Sans TC", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input { font: inherit; color: inherit; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 28px;
+      background: rgba(255, 250, 242, 0.9);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: #fffaf2;
+      font-family: "Iowan Old Style", Palatino, "Songti TC", serif;
+      font-size: 22px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-family: "Iowan Old Style", Palatino, "Songti TC", serif;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .brand p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    nav button, .ghost {
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      padding: 8px 10px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    nav button.active { color: var(--ink); border-bottom-color: var(--accent); }
+    nav button:hover, .ghost:hover { color: var(--ink); }
+
+    main { width: min(960px, calc(100% - 32px)); margin: 28px auto 48px; }
+
+    .hero, .panel, .book, .auth-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 28px; display: grid; gap: 18px; }
+    .hero h2 {
+      margin: 0 0 6px;
+      font-family: "Iowan Old Style", Palatino, "Songti TC", serif;
+      font-size: 34px;
+      font-weight: 600;
+    }
+    .lede { margin: 0; color: var(--muted); }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat { padding: 14px 16px; border-radius: 12px; background: #f7f1e6; }
+    .stat b { display: block; font-size: 28px; font-family: "Iowan Old Style", Palatino, serif; }
+    .stat span { color: var(--muted); font-size: 13px; }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin: 22px 0 10px;
+    }
+    .section-title h3 { margin: 0; font-size: 18px; }
+    .section-title span, .muted { color: var(--muted); font-size: 13px; }
+
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .toolbar input[type="search"] {
+      flex: 1 1 220px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 14px;
+    }
+    .filters { display: flex; gap: 6px; }
+    .filters button, .btn, .btn-line {
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .filters button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+    .filters button.active { background: var(--ink); color: #fffaf2; border-color: var(--ink); }
+
+    .btn {
+      border: 0;
+      background: var(--accent);
+      color: #fffaf2;
+    }
+    .btn:hover { background: var(--accent-dark); }
+    .btn:disabled { background: #c8b8a8; cursor: not-allowed; }
+    .btn-line {
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .btn-line:hover { border-color: var(--ink); }
+
+    .stack { display: grid; gap: 10px; }
+    .book {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 18px;
+    }
+    .book h4 {
+      margin: 0 0 2px;
+      font-family: "Iowan Old Style", Palatino, "Songti TC", serif;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; color: var(--muted); font-size: 14px; }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pill.ok { background: var(--green-soft); color: var(--green); }
+    .pill.busy { background: var(--busy-soft); color: var(--busy); }
+    .pill.mine { background: var(--mine-soft); color: var(--mine); }
+    .late { color: var(--danger); font-weight: 600; }
+
+    .empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      background: rgba(255, 250, 242, 0.6);
+    }
+
+    .steps { margin: 0; padding-left: 18px; color: var(--muted); }
+    .steps li { margin: 4px 0; }
+
+    .auth-wrap { min-height: calc(100vh - 78px); display: grid; place-items: center; padding: 24px 16px 48px; }
+    .auth-card { width: min(440px, 100%); padding: 28px 26px 22px; }
+    .auth-card h2 {
+      margin: 0 0 6px;
+      font-family: "Iowan Old Style", Palatino, "Songti TC", serif;
+      font-size: 32px;
+    }
+    label { display: block; margin: 14px 0 6px; font-size: 14px; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .form-error { min-height: 1.4em; margin: 10px 0 0; color: var(--danger); font-size: 14px; }
+    .auth-card .btn { width: 100%; margin-top: 16px; padding: 11px 14px; }
+    .switch { margin: 14px 0 0; text-align: center; color: var(--muted); font-size: 14px; }
+    .switch button { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; }
+    .demo {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f7f1e6;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .demo b { color: var(--ink); }
+
+    .banner {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: var(--busy-soft);
+      color: var(--busy);
+      font-size: 14px;
+    }
+
+    footer.note {
+      width: min(960px, calc(100% - 32px));
+      margin: -24px auto 36px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--ink);
+      color: #fffaf2;
+      padding: 10px 16px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s ease;
+      z-index: 10;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 720px) {
+      header { flex-wrap: wrap; padding: 14px 16px; }
+      nav { width: 100%; }
+      .stats, .book { grid-template-columns: 1fr; }
+      .hero h2 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="mark">閱</div>
+      <div>
+        <h1>圖書館借用系統</h1>
+        <p id="who">先登入才能借書</p>
+      </div>
+    </div>
+    <nav id="nav" hidden></nav>
+  </header>
+  <main id="app"></main>
+  <footer class="note" id="footnote" hidden>資料存在這台瀏覽器的本機儲存。換電腦、換瀏覽器，或清除網站資料後，帳號與借閱紀錄會消失。</footer>
+  <div id="toast" role="status"></div>
+
+  <script>
+    const STORAGE = {
+      users: "vibe-lib-users-v1",
+      books: "vibe-lib-books-v1",
+      session: "vibe-lib-session-v1"
+    };
+    const LOAN_DAYS = 14;
+    const LOAN_LIMIT = 3;
+
+    const SEED_USERS = [
+      { username: "demo", password: "demo123" },
+      { username: "館長", password: "shelf-keeper" }
+    ];
+
+    const SEED_BOOKS = [
+      { id: "b1", title: "小王子", author: "安東．聖修伯里" },
+      { id: "b2", title: "1984", author: "喬治．歐威爾" },
+      { id: "b3", title: "三體", author: "劉慈欣" },
+      { id: "b4", title: "人類大歷史", author: "哈拉瑞" },
+      { id: "b5", title: "解憂雜貨店", author: "東野圭吾" },
+      { id: "b6", title: "原子習慣", author: "詹姆斯．克利爾" },
+      { id: "b7", title: "基地", author: "以撒．艾西莫夫" },
+      { id: "b8", title: "被討厭的勇氣", author: "岸見一郎、古賀史健" }
+    ];
+
+    const state = { view: "home", authMode: "login", query: "", filter: "all" };
+    let users = [];
+    let books = [];
+    let toastTimer = 0;
+
+    function digest(text) {
+      let h = 5381;
+      for (const ch of text) h = Math.imul(h, 33) ^ ch.codePointAt(0);
+      return (h >>> 0).toString(16);
+    }
+
+    function esc(value) {
+      return String(value).replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.getFullYear() + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getDate())
+        + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function dueInfo(iso) {
+      const due = startOfDay(new Date(iso));
+      due.setDate(due.getDate() + LOAN_DAYS);
+      const days = Math.round((due - startOfDay(new Date())) / 86400000);
+      const dueText = due.getFullYear() + "/" + pad(due.getMonth() + 1) + "/" + pad(due.getDate());
+      if (days < 0) return { text: "已逾期 " + (-days) + " 天", late: true, dueText };
+      if (days === 0) return { text: "今天到期", late: true, dueText };
+      return { text: "剩餘 " + days + " 天", late: false, dueText };
+    }
+
+    function seedBooks() {
+      const borrowedAt = new Date();
+      borrowedAt.setDate(borrowedAt.getDate() - 3);
+      return SEED_BOOKS.map((book) => {
+        const copy = { ...book, status: "available", borrower: null, borrowedAt: null };
+        if (copy.id === "b7") {
+          copy.status = "borrowed";
+          copy.borrower = "館長";
+          copy.borrowedAt = borrowedAt.toISOString();
+        }
+        return copy;
+      });
+    }
+
+    function saveUsers() { localStorage.setItem(STORAGE.users, JSON.stringify(users)); }
+    function saveBooks() { localStorage.setItem(STORAGE.books, JSON.stringify(books)); }
+
+    function load() {
+      const savedUsers = localStorage.getItem(STORAGE.users);
+      const savedBooks = localStorage.getItem(STORAGE.books);
+      users = savedUsers ? JSON.parse(savedUsers) : SEED_USERS.map((user) => ({
+        username: user.username,
+        passwordHash: digest(user.password)
+      }));
+      books = savedBooks ? JSON.parse(savedBooks) : seedBooks();
+      if (!savedUsers) saveUsers();
+      if (!savedBooks) saveBooks();
+      if (!Array.isArray(users) || !Array.isArray(books)) {
+        users = SEED_USERS.map((user) => ({ username: user.username, passwordHash: digest(user.password) }));
+        books = seedBooks();
+        saveUsers();
+        saveBooks();
+      }
+    }
+
+    function sessionUser() { return localStorage.getItem(STORAGE.session); }
+
+    function myLoans() {
+      const me = sessionUser();
+      return books.filter((book) => book.borrower === me);
+    }
+
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+    }
+
+    function setFormError(message) {
+      const el = document.getElementById("form-error");
+      if (el) el.textContent = message || "";
+    }
+
+    function bookStamp(book, me) {
+      if (book.status !== "borrowed") return "在架上";
+      const who = book.borrower === me ? "你借走了" : "已被借出";
+      return who + " · " + formatDate(book.borrowedAt);
+    }
+
+    function statusPill(book, me) {
+      if (book.status === "available") return '<span class="pill ok">可借閱</span>';
+      if (book.borrower === me) return '<span class="pill mine">我的借閱</span>';
+      return '<span class="pill busy">已借出</span>';
+    }
+
+    function booksForView() {
+      let list = books.slice();
+      const me = sessionUser();
+      if (state.view === "borrow") return list.filter((book) => book.status === "available");
+      if (state.view === "return") return list.filter((book) => book.borrower === me);
+      if (state.filter === "available") list = list.filter((book) => book.status === "available");
+      if (state.filter === "borrowed") list = list.filter((book) => book.status === "borrowed");
+      const q = state.query.trim().toLowerCase();
+      if (q) list = list.filter((book) => (book.title + " " + book.author).toLowerCase().includes(q));
+      return list;
+    }
+
+    function bookCard(book) {
+      const me = sessionUser();
+      let action = "";
+      let extra = "";
+      if (state.view === "borrow") {
+        const full = myLoans().length >= LOAN_LIMIT;
+        action = '<button class="btn" data-action="borrow" data-id="' + book.id + '"'
+          + (full ? " disabled" : "") + ">借這本</button>";
+      } else if (state.view === "return") {
+        const due = dueInfo(book.borrowedAt);
+        extra = '<span class="' + (due.late ? "late" : "") + '">應還 ' + due.dueText + " · " + due.text + "</span>";
+        action = '<button class="btn" data-action="return" data-id="' + book.id + '">歸還</button>';
+      }
+      return '<article class="book"><div><h4>' + esc(book.title) + "</h4><div class=\"meta\">"
+        + statusPill(book, me)
+        + "<span>" + esc(book.author) + "</span><span>" + esc(bookStamp(book, me)) + "</span>"
+        + extra + "</div></div>" + action + "</article>";
+    }
+
+    function bookListHtml() {
+      const list = booksForView();
+      if (!list.length) {
+        const text = state.view === "return"
+          ? "你目前沒有借閱中的書。"
+          : state.view === "borrow"
+            ? "現在沒有可借的書。"
+            : "找不到符合的書。";
+        return '<div class="empty">' + text + "</div>";
+      }
+      return '<div class="stack">' + list.map(bookCard).join("") + "</div>";
+    }
+
+    function renderNav() {
+      const nav = document.getElementById("nav");
+      const me = sessionUser();
+      document.getElementById("who").textContent = me ? me + " 已登入" : "先登入才能借書";
+      document.getElementById("footnote").hidden = !me;
+      if (!me) {
+        nav.hidden = true;
+        nav.innerHTML = "";
+        return;
+      }
+      const items = [
+        ["home", "首頁"],
+        ["catalog", "館藏資訊"],
+        ["borrow", "借書系統"],
+        ["return", "歸還系統"]
+      ];
+      nav.hidden = false;
+      nav.innerHTML = items.map(([view, label]) =>
+        '<button data-action="go" data-view="' + view + '" class="' + (state.view === view ? "active" : "") + '">'
+        + label + "</button>"
+      ).join("") + '<button class="ghost" data-action="logout">登出</button>';
+    }
+
+    function renderHome() {
+      const me = sessionUser();
+      const available = books.filter((book) => book.status === "available").length;
+      const mine = myLoans();
+      const loanHtml = mine.length
+        ? '<div class="stack">' + mine.map((book) => {
+            const due = dueInfo(book.borrowedAt);
+            return '<article class="book"><div><h4>' + esc(book.title) + '</h4><div class="meta"><span>'
+              + esc(book.author) + "</span><span class=\"" + (due.late ? "late" : "") + "\">"
+              + due.text + " · 應還 " + due.dueText + '</span></div></div>'
+              + '<button class="btn-line" data-action="go" data-view="return">去歸還</button></article>';
+          }).join("") + "</div>"
+        : '<div class="empty">還沒借書。到借書系統挑一本吧。</div>';
+      return '<section class="hero"><div><h2>' + esc(me) + '，歡迎回來</h2>'
+        + '<p class="lede">這是圖書館借用系統的單機版。館藏、借還與帳號都記在這台瀏覽器裡。</p></div>'
+        + '<div class="stats"><div class="stat"><b>' + books.length + '</b><span>館藏總數</span></div>'
+        + '<div class="stat"><b>' + available + '</b><span>現在可借</span></div>'
+        + '<div class="stat"><b>' + mine.length + " / " + LOAN_LIMIT + '</b><span>我的借閱</span></div></div>'
+        + "</section>"
+        + '<div class="section-title"><h3>你手上的書</h3><button class="btn-line" data-action="reset">恢復示範館藏</button></div>'
+        + loanHtml
+        + '<div class="section-title"><h3>怎麼操作</h3></div><ol class="steps">'
+        + "<li>館藏資訊可以搜尋書名、作者，也能只看可借或已借出。</li>"
+        + "<li>借書系統只列出可借的書。每人同時最多借 " + LOAN_LIMIT + " 本，借期 " + LOAN_DAYS + " 天。</li>"
+        + "<li>歸還系統只列出你自己借的書。別人借走的書不能由你代還。</li></ol>";
+    }
+
+    function renderCatalog() {
+      const filters = [
+        ["all", "全部"],
+        ["available", "可借閱"],
+        ["borrowed", "已借出"]
+      ];
+      return '<div class="section-title"><h3>館藏資訊</h3><span>共 ' + booksForView().length + " 本</span></div>"
+        + '<div class="toolbar"><input id="q" type="search" placeholder="搜尋書名或作者" value="' + esc(state.query) + '">'
+        + '<div class="filters">' + filters.map(([key, label]) =>
+          '<button data-action="filter" data-filter="' + key + '" class="' + (state.filter === key ? "active" : "") + '">'
+          + label + "</button>"
+        ).join("") + "</div></div>"
+        + '<div id="book-list">' + bookListHtml() + "</div>";
+    }
+
+    function renderBorrow() {
+      const full = myLoans().length >= LOAN_LIMIT;
+      return '<div class="section-title"><h3>借書系統</h3><span>可借 ' + booksForView().length + " 本</span></div>"
+        + (full ? '<div class="banner">已達每人 ' + LOAN_LIMIT + " 本上限，先到歸還系統還書。</div>" : "")
+        + '<div id="book-list">' + bookListHtml() + "</div>";
+    }
+
+    function renderReturn() {
+      return '<div class="section-title"><h3>歸還系統</h3><span>你借了 ' + booksForView().length + " 本</span></div>"
+        + '<div id="book-list">' + bookListHtml() + "</div>";
+    }
+
+    function renderAuth() {
+      const login = state.authMode === "login";
+      return '<div class="auth-wrap"><form class="auth-card" id="auth-form">'
+        + "<h2>" + (login ? "登入" : "註冊") + "</h2>"
+        + '<p class="lede">' + (login ? "使用已有帳號進入閱覽室。" : "建立一個只存在這台瀏覽器的帳號。") + "</p>"
+        + '<label for="username">帳號</label>'
+        + '<input id="username" name="username" type="text" autocomplete="username" required value="'
+        + (login ? "demo" : "") + '">'
+        + '<label for="password">密碼</label>'
+        + '<input id="password" name="password" type="password" autocomplete="'
+        + (login ? "current-password" : "new-password") + '" required value="' + (login ? "demo123" : "") + '">'
+        + '<p class="form-error" id="form-error"></p>'
+        + '<button class="btn" type="submit">' + (login ? "登入" : "建立帳號") + "</button>"
+        + '<p class="switch">' + (login ? "還沒有帳號？" : "已經有帳號？")
+        + '<button type="button" data-action="auth-mode" data-mode="' + (login ? "register" : "login") + '">'
+        + (login ? "註冊" : "回去登入") + "</button></p>"
+        + (login ? '<div class="demo">示範帳號已填好：<b>demo</b> / <b>demo123</b><br>直接按登入就能操作借還。</div>' : "")
+        + "</form></div>";
+    }
+
+    function render() {
+      renderNav();
+      const app = document.getElementById("app");
+      if (!sessionUser()) {
+        app.innerHTML = renderAuth();
+        return;
+      }
+      const view = { home: renderHome, catalog: renderCatalog, borrow: renderBorrow, return: renderReturn }[state.view];
+      app.innerHTML = (view || renderHome)();
+    }
+
+    function refreshList() {
+      const list = document.getElementById("book-list");
+      const count = document.querySelector(".section-title span");
+      if (!list) { render(); return; }
+      list.innerHTML = bookListHtml();
+      if (count) {
+        const n = booksForView().length;
+        count.textContent = (state.view === "catalog" ? "共 " : state.view === "borrow" ? "可借 " : "你借了 ") + n + " 本";
+      }
+    }
+
+    function login(username, password) {
+      const found = users.find((user) => user.username === username.trim());
+      if (!found || found.passwordHash !== digest(password)) {
+        setFormError("帳號或密碼不正確。");
+        return;
+      }
+      localStorage.setItem(STORAGE.session, found.username);
+      state.view = "home";
+      toast("登入成功");
+      render();
+    }
+
+    function register(username, password) {
+      username = username.trim();
+      if (!/^[\w\u4e00-\u9fff]{2,20}$/.test(username)) {
+        setFormError("帳號需 2 到 20 字，可用中文、英文或數字。");
+        return;
+      }
+      if (password.length < 4) {
+        setFormError("密碼至少 4 個字。");
+        return;
+      }
+      if (users.some((user) => user.username === username)) {
+        setFormError("這個帳號已經有人用了。");
+        return;
+      }
+      users.push({ username, passwordHash: digest(password) });
+      saveUsers();
+      localStorage.setItem(STORAGE.session, username);
+      state.view = "home";
+      toast("註冊成功，已登入");
+      render();
+    }
+
+    function borrow(id) {
+      const me = sessionUser();
+      if (myLoans().length >= LOAN_LIMIT) {
+        toast("已達每人 " + LOAN_LIMIT + " 本上限");
+        return;
+      }
+      const book = books.find((item) => item.id === id);
+      if (!book || book.status !== "available") {
+        toast("這本書目前不能借");
+        return;
+      }
+      book.status = "borrowed";
+      book.borrower = me;
+      book.borrowedAt = new Date().toISOString();
+      saveBooks();
+      toast("已借出《" + book.title + "》");
+      render();
+    }
+
+    function returnBook(id) {
+      const me = sessionUser();
+      const book = books.find((item) => item.id === id);
+      if (!book || book.borrower !== me) {
+        toast("只能歸還自己借的書");
+        return;
+      }
+      book.status = "available";
+      book.borrower = null;
+      book.borrowedAt = null;
+      saveBooks();
+      toast("已歸還《" + book.title + "》");
+      render();
+    }
+
+    function resetCollection() {
+      books = seedBooks();
+      saveBooks();
+      toast("已恢復示範館藏");
+      render();
+    }
+
+    document.body.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      const action = target.dataset.action;
+      if (action === "go") {
+        state.view = target.dataset.view;
+        render();
+      } else if (action === "logout") {
+        localStorage.removeItem(STORAGE.session);
+        state.view = "home";
+        state.authMode = "login";
+        toast("已登出");
+        render();
+      } else if (action === "auth-mode") {
+        state.authMode = target.dataset.mode;
+        render();
+      } else if (action === "filter") {
+        state.filter = target.dataset.filter;
+        render();
+        const input = document.getElementById("q");
+        if (input) input.focus();
+      } else if (action === "borrow") {
+        borrow(target.dataset.id);
+      } else if (action === "return") {
+        returnBook(target.dataset.id);
+      } else if (action === "reset") {
+        resetCollection();
+      }
+    });
+
+    document.body.addEventListener("submit", (event) => {
+      if (event.target.id !== "auth-form") return;
+      event.preventDefault();
+      const data = new FormData(event.target);
+      const username = String(data.get("username") || "");
+      const password = String(data.get("password") || "");
+      if (state.authMode === "login") login(username, password);
+      else register(username, password);
+    });
+
+    document.body.addEventListener("input", (event) => {
+      if (event.target.id !== "q") return;
+      state.query = event.target.value;
+      refreshList();
+    });
+
+    load();
+    render();
+  </script>
+</body>
+</html>
